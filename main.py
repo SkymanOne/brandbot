@@ -5,7 +5,7 @@ import telebot
 from flask import Flask, request
 
 if 'HEROKU' in list(os.environ.keys()):
-    TOKEN = os.environ.get('TOKEN')
+    TOKEN = str(os.environ.get('TOKEN'))
 else:
     import token_key
     TOKEN = token_key.token
