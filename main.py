@@ -24,6 +24,7 @@ def get_greeting_markup():
     markup.row('🔥Инструкция для публикации🔥', '🚀Конкурс🚀')
     markup.row('⚡Правила⚡️', '🌄Модные обои🌄')
     markup.row('🛠Связаться с админами🛠', '💻О разработчике💻')
+    return markup
 
 
 @bot.message_handler(func=lambda message: message.text == 'Главное меню📲')
@@ -32,9 +33,8 @@ def echo(message: types.Message):
     bot.send_message(message.from_user.id, greeting_text, reply_markup=get_greeting_markup())
 
 
-logger = telebot.logger
-telebot.logger.setLevel(logging.INFO)
-
+# если в окуржении есть переменная HEROKU, значит поднимаем сервер
+# иначе запускаем прослушку
 if 'HEROKU' in list(os.environ.keys()):
     @server.route('/bot', methods=['POST'])
     def get_message():
