@@ -16,7 +16,7 @@ server = Flask(__name__)
 
 @bot.message_handler(content_types=['text'])
 def echo(message):
-    bot.send_message(message.from_user.id, 'Hello, world')
+    bot.reply_to(message, 'Hello, world')
 
 
 if 'HEROKU' in list(os.environ.keys()):
