@@ -5,12 +5,12 @@ import telebot
 from flask import Flask, request
 
 if 'HEROKU' in list(os.environ.keys()):
-    token = os.environ.get('TOKEN')
+    TOKEN = os.environ.get('TOKEN')
 else:
     import token_key
-    token = token_key.token
+    TOKEN = token_key.token
 
-bot = telebot.TeleBot(token)
+bot = telebot.TeleBot(TOKEN)
 server = Flask(__name__)
 
 
@@ -33,7 +33,7 @@ if 'HEROKU' in list(os.environ.keys()):
     @server.route('/')
     def webhook():
         bot.remove_webhook()
-        bot.set_webhook(url='https://brand-bot.herokuapp.com/' + token)
+        bot.set_webhook(url='https://brand-bot.herokuapp.com/' + TOKEN)
         return '!', 200
 
     if __name__ == '__main__':
