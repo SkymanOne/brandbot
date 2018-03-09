@@ -11,11 +11,17 @@ else:
     token = token_key.token
 
 bot = telebot.TeleBot(token)
+server = Flask(__name__)
+
+
+@bot.message_handler(content_types=['text'])
+def echo(message):
+    bot.reply_to(message.from_user.ig, 'Hello, world')
+
 
 if 'HEROKU' in list(os.environ.keys()):
     logger = telebot.logger
     telebot.logger.setLevel(logging.INFO)
-    server = Flask(__name__)
 
 
     @server.route('/bot', methods=['POST'])
