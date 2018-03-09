@@ -1,13 +1,13 @@
 import logging
 import os
 import telebot
-import token_key
 
 from flask import Flask, request
 
 if 'HEROKU' in list(os.environ.keys()):
     token = os.environ.get('TOKEN')
 else:
+    import token_key
     token = token_key.token
 
 bot = telebot.TeleBot(token)
