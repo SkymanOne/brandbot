@@ -27,7 +27,7 @@ if 'HEROKU' in list(os.environ.keys()):
     @server.route('/')
     def webhook():
         bot.remove_webhook()
-        bot.set_webhook(url='set url here/' + token)
+        bot.set_webhook(url='https://brand-bot.herokuapp.com/' + token)
         return '!', 200
 
     if __name__ == '__main__':
