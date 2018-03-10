@@ -35,6 +35,7 @@ def get_types_publishing():
     markup.row('💫Бесплатная публикация💫 (free)')
     markup.row('💵Закреплённый пост💵 (300 руб.)')
     markup.row('💶Пост вне очереди💶 (150 руб.)')
+    markup.row('Главное меню📲')
     markup.resize_keyboard = True
     return markup
 

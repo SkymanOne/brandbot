@@ -19,16 +19,24 @@ class User(BaseModel):
     nickname = CharField(max_length=100)
 
 
-# TODO: дописать модель
-class QueuePost(BaseModel):
+# оставляем до лучших времен
+class QueuePostBeta(BaseModel):
     name = CharField(max_length=50)
     size = CharField(max_length=30)
     state = IntegerField()
-
+    links_of_photos = TextField()
     city = CharField(max_length=150)
     price = CharField(max_length=70)
     seller = ForeignKeyField(User)
     type = IntegerField(default=0)
+
+
+class QueuePost(BaseModel):
+    type = IntegerField(default=0)
+    text = TextField()
+    links_of_photos = TextField()
+    seller = ForeignKeyField(User)
+    queue = IntegerField(default=1)
 
 
 if __name__ == '__main__':
