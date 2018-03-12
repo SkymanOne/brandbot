@@ -48,17 +48,22 @@ def get_all_posts():
         return None
 
 
-def create_post(type_of: int, text: str, links: str, seller: User):
-    try:
-        logger.info('создание заявки на публикацию')
-        new_queue = get_all_posts().count + 1
-        QueuePost.create(type_of=type_of, text=text, links_of_photos=links, seller=seller, queue=new_queue)
-    except Exception:
+def create_post(type_of: int, text: str, links: str, seller_id: int):
+    seller = get_user(seller_id)
+    if seller is not None:
+        try:
+            logger.info('создание заявки на публикацию')
+            new_queue = get_all_posts().count() + 1
+            QueuePost.create(type_of=type_of, text=text, links_of_photos=links, seller=seller, queue=new_queue)
+        except DoesNotExist:
+            logger.error('ошибка создание заявки')
+            return False
+        else:
+            logger.info('успешное создание заявки')
+            return True
+    else:
         logger.error('ошибка создание заявки')
         return False
-    else:
-        logger.info('успешное создание заявки')
-        return True
 
 
 def get_post():
@@ -69,26 +74,26 @@ def get_post():
         logger.error('пост НЕ НАЙДЕН в базе данных')
         return None
     else:
-        logger.info()
+        logger.info('успешное получение первого поста')
         return post
 
 
 def delete_post_from_queue():
     first_post = get_post()
     if first_post is not None:
-        logging.info('удаление первого в очереди поста...')
+        logger.info('удаление первого в очереди поста...')
         first_post.delete_instance()
-        logging.info('успешное удаление первого в очереди поста')
+        logger.info('успешное удаление первого в очереди поста')
         posts = get_all_posts()
         if posts is not None:
-            logging.info('смещение номера очереди на -1...')
+            logger.info('смещение номера очереди на -1...')
             for p in posts:
                 p.queue -= 1
                 p.save()
-            logging.info('успешное смещение номера очереди на -1')
+            logger.info('успешное смещение номера очереди на -1')
             return True
         else:
-            logging.error('ошибка смещение постов в очереди')
+            logger.error('ошибка смещение постов в очереди')
     else:
-        logging.error('ошибка удаление поста из очереди')
+        logger.error('ошибка удаление поста из очереди')
         return False

@@ -32,7 +32,7 @@ class QueuePostBeta(BaseModel):
 
 
 class QueuePost(BaseModel):
-    type = IntegerField(default=0)
+    type_of = IntegerField(default=1)
     text = TextField()
     links_of_photos = TextField()
     seller = ForeignKeyField(User)
