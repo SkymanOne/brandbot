@@ -28,7 +28,7 @@ class QueuePostBeta(BaseModel):
     city = CharField(max_length=150)
     price = CharField(max_length=70)
     seller = ForeignKeyField(User)
-    type = IntegerField(default=0)
+    type_of = IntegerField(default=0)
 
 
 class QueuePost(BaseModel):

@@ -35,3 +35,60 @@ def get_user(telegram_id: int):
     else:
         logger.info('успешное получение пользователя c id: {id}'.format(id=telegram_id))
         return user
+
+
+def get_all_posts():
+    logger.info('Вызов метода для получения списка всех постов.')
+    try:
+        posts = QueuePost.select()
+        logger.info('Получение постов из базы данных')
+        return posts
+    except DoesNotExist:
+        logger.error('Ошибка получения постов')
+        return None
+
+
+def create_post(type_of: int, text: str, links: str, seller: User):
+    try:
+        logger.info('создание заявки на публикацию')
+        new_queue = get_all_posts().count + 1
+        QueuePost.create(type_of=type_of, text=text, links_of_photos=links, seller=seller, queue=new_queue)
+    except Exception:
+        logger.error('ошибка создание заявки')
+        return False
+    else:
+        logger.info('успешное создание заявки')
+        return True
+
+
+def get_post():
+    try:
+        logger.info('получение первого в очереди поста...')
+        post = QueuePost.get(QueuePost.queue == 1)
+    except DoesNotExist:
+        logger.error('пост НЕ НАЙДЕН в базе данных')
+        return None
+    else:
+        logger.info()
+        return post
+
+
+def delete_post_from_queue():
+    first_post = get_post()
+    if first_post is not None:
+        logging.info('удаление первого в очереди поста...')
+        first_post.delete_instance()
+        logging.info('успешное удаление первого в очереди поста')
+        posts = get_all_posts()
+        if posts is not None:
+            logging.info('смещение номера очереди на -1...')
+            for p in posts:
+                p.queue -= 1
+                p.save()
+            logging.info('успешное смещение номера очереди на -1')
+            return True
+        else:
+            logging.error('ошибка смещение постов в очереди')
+    else:
+        logging.error('ошибка удаление поста из очереди')
+        return False
