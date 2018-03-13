@@ -1,6 +1,7 @@
 import logging
 import os
 import telebot
+from db_layer import db_acces
 
 from telebot import types
 from flask import Flask, request
@@ -17,7 +18,7 @@ bot = telebot.TeleBot(TOKEN)
 server = Flask(__name__)
 
 greeting_text = '*Добро пожаловать, модник!*😎🤙🏼\n\nДля того, чтобы опубликовать свой рарный айтем нужно быть ' \
-                'подписанным на наш канал!\n\n✔️ @BrandPlace ✔️ '
+                'подписанным на наш канал!\n\n👉️ *@BrandPlace* 👈️ '
 
 
 def get_greeting_markup():
@@ -43,7 +44,13 @@ def get_types_publishing():
 @bot.message_handler(func=lambda message: message.text == 'Главное меню📲')
 @bot.message_handler(commands=['start'])
 def greeting(message: types.Message):
-    bot.send_message(message.from_user.id, greeting_text, reply_markup=get_greeting_markup())
+    keyboard = types.InlineKeyboardMarkup()
+    url_button = types.InlineKeyboardButton(text="😼Подписаться на топ-канал😼", url="https://t.me/brandplace")
+    keyboard.add(url_button)
+    bot.send_message(message.from_user.id, greeting_text, reply_markup=get_greeting_markup(),
+                     parse_mode='Markdown')
+    bot.send_message(message.from_user.id, '*Давай*, подписывайся, если не сделал',
+                     parse_mode='Markdown', reply_markup=keyboard)
 
 
 @bot.message_handler(func=lambda message: message.text == '🔥Инструкция для публикации🔥')
@@ -64,6 +71,31 @@ def types_of_publish(message: types.Message):
     info = 'Создал? Красавчик!\nКаким способом будем публиковать твой айтем❓'
     bot.send_message(message.from_user.id, required, parse_mode='Markdown')
     bot.send_message(message.from_user.id, info, reply_markup=get_types_publishing())
+
+
+@bot.message_handler(func=lambda message: message.text == '💫Бесплатная публикация💫 (free)'
+                     or message.text == '💵Закреплённый пост💵 (300 руб.)'
+                     or message.text == '💶Пост вне очереди💶 (150 руб.)')
+def check_username(message: types.Message):
+    nickname = message.from_user.username
+    if nickname is None:
+        bot.send_message(message.from_user.id, '*У тебя не создан USERNAME❌*\nСоздай его и попробуй снова\n'
+                                               'инструкция: http://telegra.ph/1-Sozdayom-nickname-03-06',
+                         parse_mode='Markdown')
+    else:
+        bot.send_message(message.from_user.id, nickname)
+        bot.send_message(message.from_user.id, str(message.from_user.id) + ' отправь это мне в лс')
+        msg = bot.send_message(message.from_user.id, 'Введи информацию о товаре: ',
+                               reply_markup=types.ReplyKeyboardRemove())
+        # bot.register_next_step_handler(msg, reg_production)
+
+
+def reg_production(message: types.Message):
+    if message.content_type == 'text':
+        post = db_acces.get_post_by_text(message.text)
+    else:
+        msg = bot.send_message(message.from_user.id, 'Ну слушай, первым отправяем текст о товаре, фотки чутка позже 😉')
+        bot.register_next_step_handler(msg,reg_production)
 
 
 @bot.message_handler(func=lambda message: message.text == '1️⃣ Создаем nickname')

@@ -78,6 +78,17 @@ def get_post():
         return post
 
 
+def get_post_by_text(text: str):
+    try:
+        logger.info('получение поста по тексту...')
+        post = QueuePost.get(QueuePost.text == text)
+    except DoesNotExist:
+        logger.error('пост НЕ НАЙДЕН в базе данных')
+    else:
+        logger.info('успешное  поста')
+        return post
+
+
 def delete_post_from_queue():
     first_post = get_post()
     if first_post is not None:
@@ -97,3 +108,7 @@ def delete_post_from_queue():
     else:
         logger.error('ошибка удаление поста из очереди')
         return False
+
+
+if __name__ == '__main__':
+    init_db()
