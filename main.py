@@ -1,7 +1,7 @@
 import logging
 import os
 import telebot
-from db_layer import db_acces
+from db_layer import db_access, type_const
 
 from telebot import types
 from flask import Flask, request
@@ -83,19 +83,95 @@ def check_username(message: types.Message):
                                                'инструкция: http://telegra.ph/1-Sozdayom-nickname-03-06',
                          parse_mode='Markdown')
     else:
+        user = db_access.get_user(message.from_user.id)
+        if user is None:
+            db_access.create_user(message.from_user.first_name,
+                                  message.from_user.id,
+                                  message.from_user.username)
         bot.send_message(message.from_user.id, nickname)
         bot.send_message(message.from_user.id, str(message.from_user.id) + ' отправь это мне в лс')
         msg = bot.send_message(message.from_user.id, 'Введи информацию о товаре: ',
                                reply_markup=types.ReplyKeyboardRemove())
-        # bot.register_next_step_handler(msg, reg_production)
+        if message.text == '💫Бесплатная публикация💫 (free)':
+            bot.register_next_step_handler(msg, reg_free_production)
+        elif message.text == '💵Закреплённый пост💵 (300 руб.)':
+            bot.register_next_step_handler(msg, reg_fixed_publish_production)
+        elif message.text == '💶Пост вне очереди💶 (150 руб.)':
+            bot.register_next_step_handler(msg, reg_out_of_turn)
 
 
-def reg_production(message: types.Message):
+def reg_free_production(message: types.Message):
     if message.content_type == 'text':
-        post = db_acces.get_post_by_text(message.text)
+        post = db_access.get_post_by_text(message.text)
+        if post is None:
+            result = db_access.create_post(type_const.FREE_PUBLISH, message.text, '', message.from_user.id)
+            if result:
+                msg = bot.send_message(message.from_user.id, 'Такс😌, супер, теперь отправь несколько фото📷,'
+                                                             ' *но по одному* 1️⃣',
+                                       parse_mode='Markdown')
+                bot.register_next_step_handler(msg, add_photo)
+            else:
+                bot.send_message(message.from_user.id, 'Упс 🙄, что-то пошло не так😒')
     else:
-        msg = bot.send_message(message.from_user.id, 'Ну слушай, первым отправяем текст о товаре, фотки чутка позже 😉')
-        bot.register_next_step_handler(msg,reg_production)
+        msg = bot.send_message(message.from_user.id, 'Ну слушай, первым отправляем текст о товаре, фотки чутка позже 😉')
+        bot.register_next_step_handler(msg, reg_free_production)
+
+
+def reg_out_of_turn(message: types.Message):
+    if message.content_type == 'text':
+        post = db_access.get_post_by_text(message.text)
+        if post is None:
+            result = db_access.create_post(type_const.OUT_OF_TURN_PUBLISH, message.text, '', message.from_user.id)
+            if result:
+                msg = bot.send_message(message.from_user.id, 'Такс😌, супер, теперь отправь несколько фото📷,'
+                                                             ' *но по одному* 1️⃣',
+                                       parse_mode='Markdown')
+                bot.register_next_step_handler(msg, add_photo)
+            else:
+                bot.send_message(message.from_user.id, 'Упс 🙄, что-то пошло не так😒')
+    else:
+        msg = bot.send_message(message.from_user.id, 'Ну слушай, первым отправляем текст о товаре, фотки чутка позже 😉')
+        bot.register_next_step_handler(msg, reg_free_production)
+
+
+def reg_fixed_publish_production(message: types.Message):
+    if message.content_type == 'text':
+        post = db_access.get_post_by_text(message.text)
+        if post is None:
+            result = db_access.create_post(type_const.FIXED_PUBLISH, message.text, '', message.from_user.id)
+            if result:
+                msg = bot.send_message(message.from_user.id, 'Такс😌, супер, теперь отправь несколько фото📷,'
+                                                             ' *но по одному* 1️⃣',
+                                       parse_mode='Markdown')
+                bot.register_next_step_handler(msg, add_photo)
+            else:
+                bot.send_message(message.from_user.id, 'Упс 🙄, что-то пошло не так😒')
+    else:
+        msg = bot.send_message(message.from_user.id, 'Ну слушай, первым отправляем текст о товаре, фотки чутка позже 😉')
+        bot.register_next_step_handler(msg, reg_free_production)
+
+
+def add_photo(message: types.Message):
+    post = db_access.get_latest_post(message.from_user.id)
+    markup = types.ReplyKeyboardMarkup()
+    markup.row('Закончить добавление фото')
+    if not message.text == 'Закончить добавление фото' and message.content_type == 'photo':
+        file_id = message.photo[-1].file_id
+        file_info = bot.get_file(file_id)
+        file = bot.download_file(file_info.file_path)
+        link = db_access.upload_photo(file)
+        post.links_of_photos += ' {link}'.format(link=link)
+        post.save()
+        msg = bot.send_message(message.from_user.id, 'Если есть еще фото - присылай👉',
+                               reply_markup=markup)
+        bot.register_next_step_handler(msg, add_photo)
+    else:
+        bot.send_message(message.from_user.id, '*Супер!*\n\n'
+                                               'ты оставил заявку на публикаицю\nP.S. Фотки классные 😌',
+                         parse_mode='Markdown')
+        queue = post.queue
+        bot.send_message(message.from_user.id, 'Твое место в очереди на публикацию: {n}'.format(n=queue),
+                         reply_markup=get_greeting_markup())
 
 
 @bot.message_handler(func=lambda message: message.text == '1️⃣ Создаем nickname')

@@ -1,6 +1,8 @@
 import logging
 import my_logger
 from db_layer.models import *
+from telegraph import Telegraph
+import requests
 
 logger = my_logger.get_logger()
 logger.setLevel(logging.INFO)
@@ -85,8 +87,25 @@ def get_post_by_text(text: str):
     except DoesNotExist:
         logger.error('пост НЕ НАЙДЕН в базе данных')
     else:
-        logger.info('успешное  поста')
+        logger.info('успешное получение поста по тексту')
         return post
+
+
+def get_latest_post(seller_id: int):
+    seller = get_user(seller_id)
+    if seller is not None:
+        logger.info('поиск последнего поста')
+        posts = QueuePost.select().where(QueuePost.seller == seller)
+        post = None
+        i = 1
+        for p in posts:
+            if p.queue >= i:
+                i = p.queue
+                post = p
+        return post
+    else:
+        logger.error('ошибка поиска последнего поста')
+        return None
 
 
 def delete_post_from_queue():
@@ -108,6 +127,15 @@ def delete_post_from_queue():
     else:
         logger.error('ошибка удаление поста из очереди')
         return False
+
+
+def upload_photo(photo):
+    tel = Telegraph()
+    tel.create_account(short_name='brand')
+    link = 'http://telegra.ph'
+    link += requests.post(link + '/upload',
+                          files={'file': ('file', photo, 'image/jpeg')}).json()[0]['src']
+    return link
 
 
 if __name__ == '__main__':
