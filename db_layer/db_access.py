@@ -94,7 +94,7 @@ def get_post_by_text(text: str):
 def get_latest_post(seller_id: int):
     seller = get_user(seller_id)
     if seller is not None:
-        logger.info('поиск последнего поста')
+        logger.info('поиск последнего поста...')
         posts = QueuePost.select().where(QueuePost.seller == seller)
         post = None
         i = 1
@@ -102,10 +102,28 @@ def get_latest_post(seller_id: int):
             if p.queue >= i:
                 i = p.queue
                 post = p
+        logger.info('получение последнего поста post.queue = {q}'.format(q=str(post.queue)))
         return post
     else:
         logger.error('ошибка поиска последнего поста')
         return None
+
+
+def delete_latest_post(seller_id: int):
+    logger.info('даление последнего поста пользователя {id} ...'.format(id=seller_id))
+    post = get_latest_post(seller_id)
+    if post is not None:
+        i = post.queue
+        logger.info('изменение порядка очереди следующий постов')
+        for p in get_all_posts():
+            if p.queue > i:
+                p.queue -= 1
+                p.save()
+        post.delete_instance()
+        logger.info('успешное удаление последнего поста пользователя {id}'.format(id=seller_id))
+        return True
+    else:
+        return False
 
 
 def delete_post_from_queue():
@@ -130,12 +148,19 @@ def delete_post_from_queue():
 
 
 def upload_photo(photo):
-    tel = Telegraph()
-    tel.create_account(short_name='brand')
-    link = 'http://telegra.ph'
-    link += requests.post(link + '/upload',
-                          files={'file': ('file', photo, 'image/jpeg')}).json()[0]['src']
-    return link
+    logger.info('загрзука фото на сервер telegra.ph...')
+    try:
+        tel = Telegraph()
+        tel.create_account(short_name='brand')
+        link = 'http://telegra.ph'
+        link += requests.post(link + '/upload',
+                              files={'file': ('file', photo, 'image/jpeg')}).json()[0]['src']
+    except:
+        logger.error('ошибка загрузки фото на сервер telegra.ph')
+        return ''
+    else:
+        logger.info('успешная загрузка фото на сервер: ссылка: {link}'.format(link=link))
+        return link
 
 
 if __name__ == '__main__':

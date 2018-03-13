@@ -90,8 +90,10 @@ def check_username(message: types.Message):
                                   message.from_user.username)
         bot.send_message(message.from_user.id, nickname)
         bot.send_message(message.from_user.id, str(message.from_user.id) + ' отправь это мне в лс')
+        markup = types.ReplyKeyboardMarkup()
+        markup.row('Отмена')
         msg = bot.send_message(message.from_user.id, 'Введи информацию о товаре: ',
-                               reply_markup=types.ReplyKeyboardRemove())
+                               reply_markup=markup)
         if message.text == '💫Бесплатная публикация💫 (free)':
             bot.register_next_step_handler(msg, reg_free_production)
         elif message.text == '💵Закреплённый пост💵 (300 руб.)':
@@ -101,24 +103,28 @@ def check_username(message: types.Message):
 
 
 def reg_free_production(message: types.Message):
-    if message.content_type == 'text':
+    if message.content_type == 'text' and not message.text == 'Отмена':
         post = db_access.get_post_by_text(message.text)
         if post is None:
             result = db_access.create_post(type_const.FREE_PUBLISH, message.text, '', message.from_user.id)
             if result:
+                markup = types.ReplyKeyboardMarkup()
+                markup.row('Отмена')
                 msg = bot.send_message(message.from_user.id, 'Такс😌, супер, теперь отправь несколько фото📷,'
                                                              ' *но по одному* 1️⃣',
-                                       parse_mode='Markdown')
+                                       parse_mode='Markdown', reply_markup=markup)
                 bot.register_next_step_handler(msg, add_photo)
             else:
                 bot.send_message(message.from_user.id, 'Упс 🙄, что-то пошло не так😒')
+    elif message.text == 'Отмена':
+        bot.send_message(message.from_user.id, 'Публикация отменена❌', reply_markup=get_greeting_markup())
     else:
         msg = bot.send_message(message.from_user.id, 'Ну слушай, первым отправляем текст о товаре, фотки чутка позже 😉')
         bot.register_next_step_handler(msg, reg_free_production)
 
 
 def reg_out_of_turn(message: types.Message):
-    if message.content_type == 'text':
+    if message.content_type == 'text' and not message.text == 'Отмена':
         post = db_access.get_post_by_text(message.text)
         if post is None:
             result = db_access.create_post(type_const.OUT_OF_TURN_PUBLISH, message.text, '', message.from_user.id)
@@ -129,13 +135,15 @@ def reg_out_of_turn(message: types.Message):
                 bot.register_next_step_handler(msg, add_photo)
             else:
                 bot.send_message(message.from_user.id, 'Упс 🙄, что-то пошло не так😒')
+    elif message.text == 'Отмена':
+        bot.send_message(message.from_user.id, 'Публикация отменена❌', reply_markup=get_greeting_markup())
     else:
         msg = bot.send_message(message.from_user.id, 'Ну слушай, первым отправляем текст о товаре, фотки чутка позже 😉')
         bot.register_next_step_handler(msg, reg_free_production)
 
 
 def reg_fixed_publish_production(message: types.Message):
-    if message.content_type == 'text':
+    if message.content_type == 'text' and not message.text == 'Отмена':
         post = db_access.get_post_by_text(message.text)
         if post is None:
             result = db_access.create_post(type_const.FIXED_PUBLISH, message.text, '', message.from_user.id)
@@ -146,6 +154,8 @@ def reg_fixed_publish_production(message: types.Message):
                 bot.register_next_step_handler(msg, add_photo)
             else:
                 bot.send_message(message.from_user.id, 'Упс 🙄, что-то пошло не так😒')
+    elif message.text == 'Отмена':
+        bot.send_message(message.from_user.id, 'Публикация отменена❌', reply_markup=get_greeting_markup())
     else:
         msg = bot.send_message(message.from_user.id, 'Ну слушай, первым отправляем текст о товаре, фотки чутка позже 😉')
         bot.register_next_step_handler(msg, reg_free_production)
@@ -155,7 +165,9 @@ def add_photo(message: types.Message):
     post = db_access.get_latest_post(message.from_user.id)
     markup = types.ReplyKeyboardMarkup()
     markup.row('Закончить добавление фото')
-    if not message.text == 'Закончить добавление фото' and message.content_type == 'photo':
+    markup.row('Отмена')
+    markup.resize_keyboard = True
+    if message.content_type == 'photo':
         file_id = message.photo[-1].file_id
         file_info = bot.get_file(file_id)
         file = bot.download_file(file_info.file_path)
@@ -165,13 +177,22 @@ def add_photo(message: types.Message):
         msg = bot.send_message(message.from_user.id, 'Если есть еще фото - присылай👉',
                                reply_markup=markup)
         bot.register_next_step_handler(msg, add_photo)
-    else:
+    elif message.text == 'Закончить добавление фото':
         bot.send_message(message.from_user.id, '*Супер!*\n\n'
                                                'ты оставил заявку на публикаицю\nP.S. Фотки классные 😌',
                          parse_mode='Markdown')
         queue = post.queue
         bot.send_message(message.from_user.id, 'Твое место в очереди на публикацию: {n}'.format(n=queue),
                          reply_markup=get_greeting_markup())
+    elif message.text == 'Отмена':
+        result = db_access.delete_latest_post(message.from_user.id)
+        if result:
+            bot.send_message(message.from_user.id, 'Публикация отменена❌', reply_markup=get_greeting_markup())
+    else:
+        msg = bot.send_message(message.from_user.id, '*Воу*, палехче😼, присылай мне только фото плес или нажми на '
+                                                     'кнопку📲',
+                               parse_mode='Markdown', reply_markup=markup)
+        bot.register_next_step_handler(msg, add_photo)
 
 
 @bot.message_handler(func=lambda message: message.text == '1️⃣ Создаем nickname')
@@ -207,6 +228,10 @@ def connect_to_admins(message: types.Message):
     info = '❓Если возникли какие-то вопросы, то их можно задать одному из администраторов канала❓\n\n📲 @ogan3s\n\n📲 ' \
            '@code1n '
     bot.send_message(message.from_user.id, info)
+
+
+# TODO: админ команды
+
 
 # если в окуржении есть переменная HEROKU, значит поднимаем сервер
 # иначе запускаем прослушку
