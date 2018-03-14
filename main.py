@@ -6,6 +6,8 @@ from db_layer import db_access, type_const
 from telebot import types
 from flask import Flask, request
 
+# -------- variables path --------
+
 # если в окуржении есть переменная HEROKU, значит получаем токен из переменной окружения
 if 'HEROKU' in list(os.environ.keys()):
     TOKEN = str(os.environ.get('TOKEN'))
@@ -16,9 +18,18 @@ else:
 
 bot = telebot.TeleBot(TOKEN)
 server = Flask(__name__)
+ADMIN_NIKITA_ID = 450048975
+ADMIN_OGANES_ID = 291826906
+ADMIN_GERMAN_ID = 209715848
 
 greeting_text = '*Добро пожаловать, модник!*😎🤙🏼\n\nДля того, чтобы опубликовать свой рарный айтем нужно быть ' \
                 'подписанным на наш канал!\n\n👉️ *@BrandPlace* 👈️ '
+
+
+# -------- end of variables path --------
+
+
+# -------- markups of main path --------
 
 
 def get_greeting_markup():
@@ -39,6 +50,12 @@ def get_types_publishing():
     markup.row('Главное меню📲')
     markup.resize_keyboard = True
     return markup
+
+
+# -------- end markups of main path --------
+
+
+# -------- main path --------
 
 
 @bot.message_handler(func=lambda message: message.text == 'Главное меню📲')
@@ -88,8 +105,6 @@ def check_username(message: types.Message):
             db_access.create_user(message.from_user.first_name,
                                   message.from_user.id,
                                   message.from_user.username)
-        bot.send_message(message.from_user.id, nickname)
-        bot.send_message(message.from_user.id, str(message.from_user.id) + ' отправь это мне в лс')
         markup = types.ReplyKeyboardMarkup()
         markup.row('Отмена')
         msg = bot.send_message(message.from_user.id, 'Введи информацию о товаре: ',
@@ -102,10 +117,17 @@ def check_username(message: types.Message):
             bot.register_next_step_handler(msg, reg_out_of_turn)
 
 
+def send_info_to_admins(text: str):
+    bot.send_message(ADMIN_OGANES_ID, text, parse_mode='Markdown')
+    bot.send_message(ADMIN_GERMAN_ID, text, parse_mode='Markdown')
+    bot.send_message(ADMIN_NIKITA_ID, text, parse_mode='Markdown')
+
+
 def reg_free_production(message: types.Message):
     if message.content_type == 'text' and not message.text == 'Отмена':
         post = db_access.get_post_by_text(message.text)
-        if post is None:
+        count_text = len(message.text)
+        if post is None and count_text > 10:
             result = db_access.create_post(type_const.FREE_PUBLISH, message.text, '', message.from_user.id)
             if result:
                 markup = types.ReplyKeyboardMarkup()
@@ -116,6 +138,12 @@ def reg_free_production(message: types.Message):
                 bot.register_next_step_handler(msg, add_photo)
             else:
                 bot.send_message(message.from_user.id, 'Упс 🙄, что-то пошло не так😒')
+        else:
+            bot.send_message(message.from_user.id, 'Такс, такс, в твоем описании товара слишком *мало символов* 😏'
+                                                   ' или такое описание *уже существует* 🙄',
+                             parse_mode='Markdown')
+            msg = bot.send_message(message.from_user.id, 'Пришли текст еще раз 👉')
+            bot.register_next_step_handler(msg, reg_free_production)
     elif message.text == 'Отмена':
         bot.send_message(message.from_user.id, 'Публикация отменена❌', reply_markup=get_greeting_markup())
     else:
@@ -126,7 +154,8 @@ def reg_free_production(message: types.Message):
 def reg_out_of_turn(message: types.Message):
     if message.content_type == 'text' and not message.text == 'Отмена':
         post = db_access.get_post_by_text(message.text)
-        if post is None:
+        count_text = len(message.text)
+        if post is None and count_text > 10:
             result = db_access.create_post(type_const.OUT_OF_TURN_PUBLISH, message.text, '', message.from_user.id)
             if result:
                 msg = bot.send_message(message.from_user.id, 'Такс😌, супер, теперь отправь несколько фото📷,'
@@ -135,6 +164,12 @@ def reg_out_of_turn(message: types.Message):
                 bot.register_next_step_handler(msg, add_photo)
             else:
                 bot.send_message(message.from_user.id, 'Упс 🙄, что-то пошло не так😒')
+        else:
+            bot.send_message(message.from_user.id, 'Такс, такс, в твоем описании товара слишком *мало символов* 😏'
+                                                   ' или такое описание *уже существует* 🙄',
+                             parse_mode='Markdown')
+            msg = bot.send_message(message.from_user.id, 'Пришли текст еще раз 👉')
+            bot.register_next_step_handler(msg, reg_out_of_turn)
     elif message.text == 'Отмена':
         bot.send_message(message.from_user.id, 'Публикация отменена❌', reply_markup=get_greeting_markup())
     else:
@@ -145,7 +180,8 @@ def reg_out_of_turn(message: types.Message):
 def reg_fixed_publish_production(message: types.Message):
     if message.content_type == 'text' and not message.text == 'Отмена':
         post = db_access.get_post_by_text(message.text)
-        if post is None:
+        count_text = len(message.text)
+        if post is None and count_text > 10:
             result = db_access.create_post(type_const.FIXED_PUBLISH, message.text, '', message.from_user.id)
             if result:
                 msg = bot.send_message(message.from_user.id, 'Такс😌, супер, теперь отправь несколько фото📷,'
@@ -154,6 +190,12 @@ def reg_fixed_publish_production(message: types.Message):
                 bot.register_next_step_handler(msg, add_photo)
             else:
                 bot.send_message(message.from_user.id, 'Упс 🙄, что-то пошло не так😒')
+        else:
+            bot.send_message(message.from_user.id, 'Такс, такс, в твоем описании товара слишком *мало символов* 😏'
+                                                   ' или такое описание *уже существует* 🙄',
+                             parse_mode='Markdown')
+            msg = bot.send_message(message.from_user.id, 'Пришли текст еще раз 👉')
+            bot.register_next_step_handler(msg, reg_fixed_publish_production)
     elif message.text == 'Отмена':
         bot.send_message(message.from_user.id, 'Публикация отменена❌', reply_markup=get_greeting_markup())
     else:
@@ -184,6 +226,7 @@ def add_photo(message: types.Message):
         queue = post.queue
         bot.send_message(message.from_user.id, 'Твое место в очереди на публикацию: {n}'.format(n=queue),
                          reply_markup=get_greeting_markup())
+        send_info_to_admins('Успешно добавлен пост №{q} в очередь'.format(q=str(post.queue)))
     elif message.text == 'Отмена':
         result = db_access.delete_latest_post(message.from_user.id)
         if result:
@@ -230,7 +273,68 @@ def connect_to_admins(message: types.Message):
     bot.send_message(message.from_user.id, info)
 
 
-# TODO: админ команды
+# -------- end of main path --------
+
+
+# -------- admin path --------
+
+
+def get_admin_panel_markup():
+    markup = types.ReplyKeyboardMarkup()
+    markup.row('Получить следующую публикацию 👉')
+    return markup
+
+
+def parse_links(string: str):
+    list_of_links = map(str, string.split())
+    return list_of_links
+
+
+@bot.message_handler(commands=['admin'])
+def admin_greeting(message: types.Message):
+    if message.from_user.id == ADMIN_NIKITA_ID or \
+            message.from_user.id == ADMIN_OGANES_ID or \
+            message.from_user.id == ADMIN_GERMAN_ID:
+        bot.send_message(message.from_user.id, 'Приветствую тебя, мой *повелитель* 🙌\n\nТы находишься в админ-панеле '
+                                               'бота *BrandBot*\n\nP.S. Функционал еще будет расширяться😏.',
+                         parse_mode='Markdown', reply_markup=get_admin_panel_markup())
+    else:
+        bot.send_message(message.from_user.id, 'Прости😒, у тебя *недостаточно прав* для этой команды',
+                         parse_mode='Markdown')
+
+
+@bot.message_handler(func=lambda message: message.text == 'Получить следующую публикацию 👉'
+                     and (message.from_user.id == ADMIN_NIKITA_ID or
+                          message.from_user.id == ADMIN_OGANES_ID or
+                          message.from_user.id == ADMIN_GERMAN_ID))
+def get_next_publication(message: types.Message):
+    post = db_access.get_free_post()
+    if post is not None:
+        type_of_post = 'Бесплатная публикация'
+        if post.type_of == type_const.FIXED_PUBLISH:
+            type_of_post = 'Закрепленный пост'
+        elif post.type_of == type_const.OUT_OF_TURN_PUBLISH:
+            type_of_post = 'Пост вне очереди'
+        info = '⚡️ Публикация товара от 👉 {name}\n' \
+               '⚡️ username 👉 *{username}*\n' \
+               '⚡️ ссылка на профиль 👉 [http://t.me/{username}](http://t.me/{username})\n' \
+               '⚡️ Тип поста 👉 *{type}*\n'.format(name=post.seller.name, username=post.seller.nickname, type=type_of_post)
+        bot.send_message(message.from_user.id, info, reply_markup=types.ReplyKeyboardRemove(),
+                         parse_mode='Markdown')
+        bot.send_message(message.from_user.id, 'Текст 👉')
+        bot.send_message(message.from_user.id, post.text)
+        bot.send_message(message.from_user.id, 'Фото товара 👉')
+        list_of_links = parse_links(post.links_of_photos)
+        n = 1
+        for l in list_of_links:
+            bot.send_message(message.from_user.id,
+                             '<a href="{link}">Вот фотка №{n}</a>'.format(link=l, n=n),
+                             parse_mode='HTML')
+            n += 1
+        bot.send_message(message.from_user.id, '🙌Всё🙌', reply_markup=get_admin_panel_markup())
+    else:
+        bot.send_message(message.from_user.id, 'Постов на публикацию нет 🙄')
+
 
 
 # если в окуржении есть переменная HEROKU, значит поднимаем сервер
