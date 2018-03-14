@@ -147,6 +147,9 @@ def delete_post_from_queue():
         return False
 
 
+# TODO: получение оплаченных постов и их удаление
+
+
 def upload_photo(photo):
     logger.info('загрзука фото на сервер telegra.ph...')
     try:

@@ -224,7 +224,9 @@ def add_photo(message: types.Message):
                                                'ты оставил заявку на публикаицю\nP.S. Фотки классные 😌',
                          parse_mode='Markdown')
         queue = post.queue
-        bot.send_message(message.from_user.id, 'Твое место в очереди на публикацию: {n}'.format(n=queue),
+        bot.send_message(message.from_user.id, 'Твое место в общей очереди на публикацию: {n}\n'
+                                               'P.S. если ты выбрал платную услугу💰, '
+                                               'публикация произойдет гораздо быстрее😎'.format(n=queue),
                          reply_markup=get_greeting_markup())
         send_info_to_admins('Успешно добавлен пост №{q} в очередь'.format(q=str(post.queue)))
     elif message.text == 'Отмена':
@@ -308,7 +310,7 @@ def admin_greeting(message: types.Message):
                           message.from_user.id == ADMIN_OGANES_ID or
                           message.from_user.id == ADMIN_GERMAN_ID))
 def get_next_publication(message: types.Message):
-    post = db_access.get_free_post()
+    post = db_access.get_post()
     if post is not None:
         type_of_post = 'Бесплатная публикация'
         if post.type_of == type_const.FIXED_PUBLISH:
@@ -318,7 +320,8 @@ def get_next_publication(message: types.Message):
         info = '⚡️ Публикация товара от 👉 {name}\n' \
                '⚡️ username 👉 *{username}*\n' \
                '⚡️ ссылка на профиль 👉 [http://t.me/{username}](http://t.me/{username})\n' \
-               '⚡️ Тип поста 👉 *{type}*\n'.format(name=post.seller.name, username=post.seller.nickname, type=type_of_post)
+               '⚡️ Тип поста 👉 *{type}*\n'\
+            .format(name=post.seller.name, username=post.seller.nickname, type=type_of_post)
         bot.send_message(message.from_user.id, info, reply_markup=types.ReplyKeyboardRemove(),
                          parse_mode='Markdown')
         bot.send_message(message.from_user.id, 'Текст 👉')
@@ -332,9 +335,9 @@ def get_next_publication(message: types.Message):
                              parse_mode='HTML')
             n += 1
         bot.send_message(message.from_user.id, '🙌Всё🙌', reply_markup=get_admin_panel_markup())
+        db_access.delete_post_from_queue()
     else:
         bot.send_message(message.from_user.id, 'Постов на публикацию нет 🙄')
-
 
 
 # если в окуржении есть переменная HEROKU, значит поднимаем сервер
