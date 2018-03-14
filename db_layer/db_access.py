@@ -1,6 +1,7 @@
 import logging
 import my_logger
 from db_layer.models import *
+from db_layer.type_const import *
 from telegraph import Telegraph
 import requests
 
@@ -147,7 +148,15 @@ def delete_post_from_queue():
         return False
 
 
-# TODO: получение оплаченных постов и их удаление
+def get_all_fixed_post():
+    logger.info('Вызов метода для получения списка всех закрепленных постов.')
+    try:
+        posts = QueuePost.select().where(QueuePost.type_of == FIXED_PUBLISH)
+        logger.info('Получение закреплённых постов из базы данных')
+        return posts
+    except DoesNotExist:
+        logger.error('Ошибка получения закреплённых постов')
+        return None
 
 
 def upload_photo(photo):
