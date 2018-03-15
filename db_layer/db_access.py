@@ -153,10 +153,11 @@ def get_all_fixed_post():
     try:
         posts = QueuePost.select().where(QueuePost.type_of == FIXED_PUBLISH)
         logger.info('Получение закреплённых постов из базы данных')
-        return posts
     except DoesNotExist:
         logger.error('Ошибка получения закреплённых постов')
         return None
+    else:
+        return posts
 
 
 def get_all_out_of_turn_post():
@@ -164,10 +165,73 @@ def get_all_out_of_turn_post():
     try:
         posts = QueuePost.select().where(QueuePost.type_of == OUT_OF_TURN_PUBLISH)
         logger.info('Получение внеочередных постов из базы данных')
-        return posts
     except DoesNotExist:
         logger.error('Ошибка получения внеочередных постов')
         return None
+    else:
+        return posts
+
+
+def get_out_of_turn_post():
+    logger.info('Вызов метода для получения внеочередного поста.')
+    try:
+        logger.info('получение внеочередного поста...')
+        post = QueuePost.get(QueuePost.type_of == OUT_OF_TURN_PUBLISH)
+    except DoesNotExist:
+        logger.error('внеочередной пост не найден')
+        return None
+    else:
+        logger.info('внеочередной пост найден')
+        return post
+
+
+def get_fixed_post():
+    logger.info('Вызов метода для получения закрепленного поста.')
+    try:
+        logger.info('получение закрепленного поста...')
+        post = QueuePost.get(QueuePost.type_of == FIXED_PUBLISH)
+    except DoesNotExist:
+        logger.error('закрепленный пост не найден')
+        return None
+    else:
+        logger.info('закрепленный пост найден')
+        return post
+
+
+def delete_out_of_turn_post():
+    logger.info('удаление первого внеуочереднего поста из очереди...')
+    post = get_out_of_turn_post()
+    if post is not None:
+        queue = post.queue
+        posts = QueuePost.select().where(QueuePost.queue > queue)
+        logger.info('смещение очереди перед постов на -1')
+        for p in posts:
+            p.queue -= 1
+            p.save()
+        post.delete_instance()
+        logger.info('внеуочередной пост успешно удален')
+        return True
+    else:
+        logger.error('ошибка удаление внеуочередного поста')
+        return False
+
+
+def delete_fixed_post():
+    logger.info('удаление первого закрепленного поста из очереди...')
+    post = get_fixed_post()
+    if post is not None:
+        queue = post.queue
+        posts = QueuePost.select().where(QueuePost.queue > queue)
+        logger.info('смещение очереди перед постов на -1')
+        for p in posts:
+            p.queue -= 1
+            p.save()
+        post.delete_instance()
+        logger.info('закрепленный пост успешно удален')
+        return True
+    else:
+        logger.error('ошибка удаление закрепленного поста')
+        return False
 
 
 def upload_photo(photo):

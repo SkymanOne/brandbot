@@ -250,7 +250,7 @@ def add_photo(message: types.Message):
         outc = db_access.get_all_out_of_turn_post().count()
         bot.send_message(message.from_user.id, text.format(n=queue, p1=outc, p2=fxc),
                          parse_mode='Markdown', reply_markup=get_greeting_markup())
-        send_info_to_admins('Успешно добавлен пост №{q} в очередь'.format(q=str(post.queue)))
+        # send_info_to_admins('Успешно добавлен пост №{q} в очередь'.format(q=str(post.queue)))
     elif message.text == 'Отмена':
         result = db_access.delete_latest_post(message.from_user.id)
         if result:
@@ -305,7 +305,9 @@ def connect_to_admins(message: types.Message):
 
 def get_admin_panel_markup():
     markup = types.ReplyKeyboardMarkup()
-    markup.row('Получить следующую публикацию 👉')
+    markup.row('Получить следующую бесплатную публикацию 👉')
+    markup.row('Получить следующую закрепленную публикацию 👉')
+    markup.row('Получить следующую публикацию вне очереди 👉')
     return markup
 
 
@@ -327,7 +329,7 @@ def admin_greeting(message: types.Message):
                          parse_mode='Markdown')
 
 
-@bot.message_handler(func=lambda message: message.text == 'Получить следующую публикацию 👉'
+@bot.message_handler(func=lambda message: message.text == 'Получить следующую бесплатную публикацию 👉'
                      and (message.from_user.id == ADMIN_NIKITA_ID or
                           message.from_user.id == ADMIN_OGANES_ID or
                           message.from_user.id == ADMIN_GERMAN_ID))
@@ -358,6 +360,68 @@ def get_next_publication(message: types.Message):
             n += 1
         bot.send_message(message.from_user.id, '🙌Всё🙌', reply_markup=get_admin_panel_markup())
         db_access.delete_post_from_queue()
+    else:
+        bot.send_message(message.from_user.id, 'Постов на публикацию нет 🙄')
+
+
+@bot.message_handler(func=lambda message: message.text == 'Получить следующую закрепленную публикацию 👉'
+                     and (message.from_user.id == ADMIN_NIKITA_ID or
+                          message.from_user.id == ADMIN_OGANES_ID or
+                          message.from_user.id == ADMIN_GERMAN_ID))
+def get_next_fixed_publication(message: types.Message):
+    post = db_access.get_fixed_post()
+    if post is not None:
+        type_of_post = 'Закрепленный пост'
+        info = '⚡️ Публикация товара от 👉 {name}\n' \
+               '⚡️ username 👉 *{username}*\n' \
+               '⚡️ ссылка на профиль 👉 [http://t.me/{username}](http://t.me/{username})\n' \
+               '⚡️ Тип поста 👉 *{type}*\n'\
+            .format(name=post.seller.name, username=post.seller.nickname, type=type_of_post)
+        bot.send_message(message.from_user.id, info, reply_markup=types.ReplyKeyboardRemove(),
+                         parse_mode='Markdown')
+        bot.send_message(message.from_user.id, 'Текст 👉')
+        bot.send_message(message.from_user.id, post.text)
+        bot.send_message(message.from_user.id, 'Фото товара 👉')
+        list_of_links = parse_links(post.links_of_photos)
+        n = 1
+        for l in list_of_links:
+            bot.send_message(message.from_user.id,
+                             '<a href="{link}">Вот фотка №{n}</a>'.format(link=l, n=n),
+                             parse_mode='HTML')
+            n += 1
+        bot.send_message(message.from_user.id, '🙌Всё🙌', reply_markup=get_admin_panel_markup())
+        db_access.delete_fixed_post()
+    else:
+        bot.send_message(message.from_user.id, 'Постов на публикацию нет 🙄')
+
+
+@bot.message_handler(func=lambda message: message.text == 'Получить следующую публикацию вне очереди 👉'
+                     and (message.from_user.id == ADMIN_NIKITA_ID or
+                          message.from_user.id == ADMIN_OGANES_ID or
+                          message.from_user.id == ADMIN_GERMAN_ID))
+def get_next_fixed_publication(message: types.Message):
+    post = db_access.get_out_of_turn_post()
+    if post is not None:
+        type_of_post = 'Пост вне очереди'
+        info = '⚡️ Публикация товара от 👉 {name}\n' \
+               '⚡️ username 👉 *{username}*\n' \
+               '⚡️ ссылка на профиль 👉 [http://t.me/{username}](http://t.me/{username})\n' \
+               '⚡️ Тип поста 👉 *{type}*\n'\
+            .format(name=post.seller.name, username=post.seller.nickname, type=type_of_post)
+        bot.send_message(message.from_user.id, info, reply_markup=types.ReplyKeyboardRemove(),
+                         parse_mode='Markdown')
+        bot.send_message(message.from_user.id, 'Текст 👉')
+        bot.send_message(message.from_user.id, post.text)
+        bot.send_message(message.from_user.id, 'Фото товара 👉')
+        list_of_links = parse_links(post.links_of_photos)
+        n = 1
+        for l in list_of_links:
+            bot.send_message(message.from_user.id,
+                             '<a href="{link}">Вот фотка №{n}</a>'.format(link=l, n=n),
+                             parse_mode='HTML')
+            n += 1
+        bot.send_message(message.from_user.id, '🙌Всё🙌', reply_markup=get_admin_panel_markup())
+        db_access.delete_out_of_turn_post()
     else:
         bot.send_message(message.from_user.id, 'Постов на публикацию нет 🙄')
 
