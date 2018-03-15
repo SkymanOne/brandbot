@@ -159,6 +159,17 @@ def get_all_fixed_post():
         return None
 
 
+def get_all_out_of_turn_post():
+    logger.info('Вызов метода для получения списка всех внеочередных постов.')
+    try:
+        posts = QueuePost.select().where(QueuePost.type_of == OUT_OF_TURN_PUBLISH)
+        logger.info('Получение внеочередных постов из базы данных')
+        return posts
+    except DoesNotExist:
+        logger.error('Ошибка получения внеочередных постов')
+        return None
+
+
 def upload_photo(photo):
     logger.info('загрзука фото на сервер telegra.ph...')
     try:

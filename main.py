@@ -241,14 +241,15 @@ def add_photo(message: types.Message):
                                reply_markup=markup)
         bot.register_next_step_handler(msg, add_photo)
     elif message.text == 'Закончить добавление фото':
-        bot.send_message(message.from_user.id, '*Супер!*\n\n'
-                                               'ты оставил заявку на публикаицю\nP.S. Фотки классные 😌',
-                         parse_mode='Markdown')
         queue = post.queue
-        bot.send_message(message.from_user.id, 'Твое место в общей очереди на публикацию: {n}\n'
-                                               'P.S. если ты выбрал платную услугу💰, '
-                                               'публикация произойдет гораздо быстрее😎'.format(n=queue),
-                         reply_markup=get_greeting_markup())
+        text = 'Создан отложенный пост в канал «BrandPlace» @brandplace.\n\n*Твое место в общей очереди на ' \
+               'публикацию: {n}*\n\n💶Постов вне очереди💶: *{p1}*\n💵Закреплённых постов💵: *{p2}*\n\nСпасибо, ' \
+               'что воспользовались нашей площадкой🤙🏼\n\nP.S. если ты выбрал платную услугу💰, публикация ' \
+               'произойдет гораздо быстрее😎 '
+        fxc = db_access.get_all_fixed_post().count()
+        outc = db_access.get_all_out_of_turn_post().count()
+        bot.send_message(message.from_user.id, text.format(n=queue, p1=outc, p2=fxc),
+                         parse_mode='Markdown', reply_markup=get_greeting_markup())
         send_info_to_admins('Успешно добавлен пост №{q} в очередь'.format(q=str(post.queue)))
     elif message.text == 'Отмена':
         result = db_access.delete_latest_post(message.from_user.id)
