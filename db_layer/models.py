@@ -2,7 +2,7 @@ import os
 from peewee import *
 from playhouse.db_url import connect
 
-if 'HEROKU' in list(os.environ.keys()):
+if 'HEROKU1' in list(os.environ.keys()):
     db = connect(os.environ.get('DATABASE_URL'))
 else:
     db = SqliteDatabase('develop.db')

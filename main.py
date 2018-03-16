@@ -9,7 +9,7 @@ from flask import Flask, request
 # -------- variables path --------
 
 # если в окуржении есть переменная HEROKU, значит получаем токен из переменной окружения
-if 'HEROKU' in list(os.environ.keys()):
+if 'HEROKU1' in list(os.environ.keys()):
     TOKEN = str(os.environ.get('TOKEN'))
 # иначе импортируем его из скрытого в файлы в папке проекта
 else:
