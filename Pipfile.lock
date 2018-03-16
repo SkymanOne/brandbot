@@ -86,9 +86,9 @@
         },
         "peewee": {
             "hashes": [
-                "sha256:46d96502ea6f84f8e66c055282ac2d6fd332ccd62c8c3c93d68a43d055cd2450"
+                "sha256:c57fa818062a4137e79619a40e97c19c839b54381bceec3e7bd040b3252e7867"
             ],
-            "version": "==3.1.2"
+            "version": "==3.1.5"
         },
         "psycopg2-binary": {
             "hashes": [
@@ -124,9 +124,9 @@
         },
         "pytelegrambotapi": {
             "hashes": [
-                "sha256:3d94916b609da91866aaa8dc4b024dbc72f157a0ed5e82e51224886c602f5521"
+                "sha256:b8bca082b96122d1b6dc2d1dbc3c6cef4c1f520e0ab0ee06999b853abb93ec65"
             ],
-            "version": "==3.6.0"
+            "version": "==3.6.1"
         },
         "requests": {
             "hashes": [
