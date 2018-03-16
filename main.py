@@ -439,7 +439,7 @@ def get_next_fixed_publication(message: types.Message):
 # если в окуржении есть переменная HEROKU, значит поднимаем сервер
 # иначе запускаем прослушку
 if 'HEROKU' in list(os.environ.keys()):
-    @server.route('/bot', methods=['POST'])
+    @server.route('/' + TOKEN, methods=['POST'])
     def get_message():
         bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
         return "!", 200
@@ -448,7 +448,7 @@ if 'HEROKU' in list(os.environ.keys()):
     @server.route('/')
     def webhook():
         bot.remove_webhook()
-        bot.set_webhook(url='https://brand-bot.herokuapp.com/' + 'bot')
+        bot.set_webhook(url='https://brand-bot.herokuapp.com/' + TOKEN)
         return '!', 200
 
 
