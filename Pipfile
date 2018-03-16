@@ -11,7 +11,7 @@ flask = "*"
 gunicorn = "*"
 peewee = "*"
 psycopg2-binary = "*"
-
+mypy = "*"
 
 [dev-packages]
 
