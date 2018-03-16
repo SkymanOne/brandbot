@@ -85,17 +85,21 @@ def manual(message: types.Message):
 def types_of_publish(message: types.Message):
     required = '🔴*ОБЯЗАТЕЛЬНО* надо создать никнейм. Это нужно для того, чтобы с тобой *смог* связаться ' \
                'покупатель🔴\n\n📝В телеграме заходим в Настройки(Settings) ▶️ Имя пользователя(Username)📝 '
-    info = 'Создал? Красавчик!\nКаким способом будем публиковать твой айтем❓'
-    bot.send_message(message.from_user.id, required, parse_mode='Markdown')
-    bot.send_message(message.from_user.id, info, reply_markup=get_types_publishing())
+    info = 'Каким способом будем публиковать твой айтем❓'
+    username = message.from_user.username
+    if username is not None:
+        bot.send_message(message.from_user.id, info, reply_markup=get_types_publishing())
+    else:
+        bot.send_message(message.from_user.id, required, parse_mode='Markdown',
+                         reply_markup=get_types_publishing())
 
 
 @bot.message_handler(func=lambda message: message.text == '💫Бесплатная публикация💫 (free)'
                      or message.text == '💵Закреплённый пост💵 (300 руб.)'
                      or message.text == '💶Пост вне очереди💶 (150 руб.)')
 def check_username(message: types.Message):
-    nickname = message.from_user.username
-    if nickname is None:
+    username = message.from_user.username
+    if username is None:
         bot.send_message(message.from_user.id, '*У тебя не создан USERNAME❌*\nСоздай его и попробуй снова\n'
                                                'инструкция: http://telegra.ph/1-Sozdayom-nickname-03-06',
                          parse_mode='Markdown')
@@ -107,6 +111,7 @@ def check_username(message: types.Message):
                                   message.from_user.username)
         markup = types.ReplyKeyboardMarkup()
         markup.row('Отмена')
+        markup.resize_keyboard = True
         if message.text == '💫Бесплатная публикация💫 (free)':
             text = '💫Бесплатная публикация💫 (free)\n\n(🔥*ЗДЕСЬ НУЖЕН ТОЛЬКО ТЕКСТ. ОДНИМ СООБЩЕНИЕМ*🔥)\n\n' \
                    'Правила для ' \
@@ -153,6 +158,7 @@ def reg_free_production(message: types.Message):
             if result:
                 markup = types.ReplyKeyboardMarkup()
                 markup.row('Отмена')
+                markup.resize_keyboard = True
                 msg = bot.send_message(message.from_user.id, 'Такс😌, супер, теперь отправь несколько фото📷,'
                                                              ' *но по одному* 1️⃣',
                                        parse_mode='Markdown', reply_markup=markup)
@@ -244,13 +250,12 @@ def add_photo(message: types.Message):
         queue = post.queue
         text = 'Создан отложенный пост в канал «BrandPlace» @brandplace.\n\n*Твое место в общей очереди на ' \
                'публикацию: {n}*\n\n💶Постов вне очереди💶: *{p1}*\n💵Закреплённых постов💵: *{p2}*\n\nСпасибо, ' \
-               'что воспользовались нашей площадкой🤙🏼\n\nP.S. если ты выбрал платную услугу💰, публикация ' \
-               'произойдет гораздо быстрее😎 '
+               'что воспользовались нашей площадкой🤙🏼'
         fxc = db_access.get_all_fixed_post().count()
         outc = db_access.get_all_out_of_turn_post().count()
         bot.send_message(message.from_user.id, text.format(n=queue, p1=outc, p2=fxc),
                          parse_mode='Markdown', reply_markup=get_greeting_markup())
-        # send_info_to_admins('Успешно добавлен пост №{q} в очередь'.format(q=str(post.queue)))
+        send_info_to_admins('Успешно добавлен пост №{q} в очередь'.format(q=str(post.queue)))
     elif message.text == 'Отмена':
         result = db_access.delete_latest_post(message.from_user.id)
         if result:
@@ -287,7 +292,14 @@ def about_developer(message: types.Message):
     about_me = 'German Nikolishin\n\nPython and .NET developer👨‍💻\nTelegram👉 @german_nikolishin\nGitHub👉 ' \
                'https://github.com/SkymanOne\nVK👉 https://vk.com/german_it\nInst👉 ' \
                'https://www.instagram.com/german.nikolishin/\nTelegram Channel👉 https://t.me/VneUrokaDev '
-    bot.send_message(message.from_user.id, about_me)
+    keyboard = types.InlineKeyboardMarkup()
+    telegram_button = types.InlineKeyboardButton('🔷 Telegram Profile 🔷', url='t.me/german_nikolishin')
+    vk_button = types.InlineKeyboardButton('🔷 VK 🔷', url='https://vk.com/german_it')
+    inst_button = types.InlineKeyboardButton('🔶 Inst 🔶', url='https://www.instagram.com/german.nikolishin/')
+    github_button = types.InlineKeyboardButton('⚡️ GitHub ⚡️', url='https://github.com/SkymanOne')
+    channel_button = types.InlineKeyboardButton('💠 Telegram Channel 💠', url='https://t.me/VneUrokaDev')
+    keyboard.add(github_button, vk_button, inst_button, telegram_button, channel_button)
+    bot.send_message(message.from_user.id, about_me, reply_markup=keyboard)
 
 
 @bot.message_handler(func=lambda message: message.text == '🛠Связаться с админами🛠')
@@ -305,9 +317,9 @@ def connect_to_admins(message: types.Message):
 
 def get_admin_panel_markup():
     markup = types.ReplyKeyboardMarkup()
-    markup.row('Получить следующую бесплатную публикацию 👉')
-    markup.row('Получить следующую закрепленную публикацию 👉')
-    markup.row('Получить следующую публикацию вне очереди 👉')
+    markup.row('✅ Следующая бесплатная публикация 👉')
+    markup.row('✅ Следующая закрепленная публикация 👉')
+    markup.row('✅ Следующая публикация вне очереди 👉')
     return markup
 
 
@@ -329,7 +341,7 @@ def admin_greeting(message: types.Message):
                          parse_mode='Markdown')
 
 
-@bot.message_handler(func=lambda message: message.text == 'Получить следующую бесплатную публикацию 👉'
+@bot.message_handler(func=lambda message: message.text == '✅ Следующая бесплатная публикация 👉'
                      and (message.from_user.id == ADMIN_NIKITA_ID or
                           message.from_user.id == ADMIN_OGANES_ID or
                           message.from_user.id == ADMIN_GERMAN_ID))
@@ -364,7 +376,7 @@ def get_next_publication(message: types.Message):
         bot.send_message(message.from_user.id, 'Постов на публикацию нет 🙄')
 
 
-@bot.message_handler(func=lambda message: message.text == 'Получить следующую закрепленную публикацию 👉'
+@bot.message_handler(func=lambda message: message.text == '✅ Следующая закрепленная публикация 👉'
                      and (message.from_user.id == ADMIN_NIKITA_ID or
                           message.from_user.id == ADMIN_OGANES_ID or
                           message.from_user.id == ADMIN_GERMAN_ID))
@@ -395,7 +407,7 @@ def get_next_fixed_publication(message: types.Message):
         bot.send_message(message.from_user.id, 'Постов на публикацию нет 🙄')
 
 
-@bot.message_handler(func=lambda message: message.text == 'Получить следующую публикацию вне очереди 👉'
+@bot.message_handler(func=lambda message: message.text == '✅ Следующая публикация вне очереди 👉'
                      and (message.from_user.id == ADMIN_NIKITA_ID or
                           message.from_user.id == ADMIN_OGANES_ID or
                           message.from_user.id == ADMIN_GERMAN_ID))
