@@ -183,9 +183,12 @@ def reg_out_of_turn(message: types.Message):
         if post is None and count_text > 10:
             result = db_access.create_post(type_const.OUT_OF_TURN_PUBLISH, message.text, '', message.from_user.id)
             if result:
+                markup = types.ReplyKeyboardMarkup()
+                markup.row('Отмена')
+                markup.resize_keyboard = True
                 msg = bot.send_message(message.from_user.id, 'Такс😌, супер, теперь отправь несколько фото📷,'
                                                              ' *но по одному* 1️⃣',
-                                       parse_mode='Markdown')
+                                       parse_mode='Markdown', reply_markup=markup)
                 bot.register_next_step_handler(msg, add_photo)
             else:
                 bot.send_message(message.from_user.id, 'Упс 🙄, что-то пошло не так😒')
@@ -199,7 +202,7 @@ def reg_out_of_turn(message: types.Message):
         bot.send_message(message.from_user.id, 'Публикация отменена❌', reply_markup=get_greeting_markup())
     else:
         msg = bot.send_message(message.from_user.id, 'Ну слушай, первым отправляем текст о товаре, фотки чутка позже 😉')
-        bot.register_next_step_handler(msg, reg_free_production)
+        bot.register_next_step_handler(msg, reg_out_of_turn)
 
 
 def reg_fixed_publish_production(message: types.Message):
@@ -209,9 +212,12 @@ def reg_fixed_publish_production(message: types.Message):
         if post is None and count_text > 10:
             result = db_access.create_post(type_const.FIXED_PUBLISH, message.text, '', message.from_user.id)
             if result:
+                markup = types.ReplyKeyboardMarkup()
+                markup.row('Отмена')
+                markup.resize_keyboard = True
                 msg = bot.send_message(message.from_user.id, 'Такс😌, супер, теперь отправь несколько фото📷,'
                                                              ' *но по одному* 1️⃣',
-                                       parse_mode='Markdown')
+                                       parse_mode='Markdown', reply_markup=markup)
                 bot.register_next_step_handler(msg, add_photo)
             else:
                 bot.send_message(message.from_user.id, 'Упс 🙄, что-то пошло не так😒')
@@ -225,7 +231,7 @@ def reg_fixed_publish_production(message: types.Message):
         bot.send_message(message.from_user.id, 'Публикация отменена❌', reply_markup=get_greeting_markup())
     else:
         msg = bot.send_message(message.from_user.id, 'Ну слушай, первым отправляем текст о товаре, фотки чутка позже 😉')
-        bot.register_next_step_handler(msg, reg_free_production)
+        bot.register_next_step_handler(msg, reg_fixed_publish_production)
 
 
 def add_photo(message: types.Message):
