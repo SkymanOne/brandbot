@@ -12,6 +12,7 @@ gunicorn = "*"
 peewee = "*"
 psycopg2-binary = "*"
 mypy = "*"
+telegraph = "*"
 
 [dev-packages]
 
