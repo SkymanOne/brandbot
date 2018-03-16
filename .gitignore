@@ -60,3 +60,5 @@ target/
 token_key\.py
 
 \.idea/
+
+develop\.db
