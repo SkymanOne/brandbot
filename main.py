@@ -28,9 +28,7 @@ greeting_text = '*Добро пожаловать, модник!*😎🤙🏼\n\
 
 # -------- end of variables path --------
 
-
 # -------- markups of main path --------
-
 
 def get_greeting_markup():
     markup = types.ReplyKeyboardMarkup()
