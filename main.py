@@ -298,7 +298,7 @@ def admin_greeting(message: types.Message):
             message.from_user.id == ADMIN_OGANES_ID or \
             message.from_user.id == ADMIN_GERMAN_ID:
         bot.send_message(message.from_user.id, 'Приветствую тебя, мой *повелитель* 🙌\n\nТы находишься в админ-панеле '
-                                               'бота *BrandBot*\n\nP.S. Функционал еще будет расширяться😏.',
+                                               'бота *BrandBot*\n\nP.S. Функционал еще будет расширяться😏',
                          parse_mode='Markdown', reply_markup=get_admin_panel_markup())
     else:
         bot.send_message(message.from_user.id, 'Прости😒, у тебя *недостаточно прав* для этой команды',
