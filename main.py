@@ -206,7 +206,13 @@ def add_photo(message: types.Message):
         outc = db_access.get_all_out_of_turn_post().count()
         bot.send_message(message.from_user.id, text.format(n=queue, p1=outc, p2=fxc),
                          parse_mode='Markdown', reply_markup=get_greeting_markup())
-        send_info_to_admins('Успешно добавлен пост №{q} в очередь'.format(q=str(post.queue)))
+        type_str = 'бесплатный'
+        if post.type_of == type_const.FIXED_PUBLISH:
+            type_str = 'закрепленный'
+        elif post.type_of == type_const.OUT_OF_TURN_PUBLISHЖ
+            type_str = 'внеочередной'
+        send_info_to_admins('Успешно добавлен {t} пост №{q} в очередь'.format(q=str(post.queue),
+                                                                              t=type_str))
         db_access.set_user_state(message.from_user.id, states.NONE_STATE)
     elif message.text == 'Отмена':
         result = db_access.delete_latest_post(message.from_user.id)
