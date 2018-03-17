@@ -150,7 +150,7 @@ def send_info_to_admins(text: str):
     bot.send_message(ADMIN_NIKITA_ID, text, parse_mode='Markdown')
 
 
-@bot.message_handler(func=lambda message: db_access.get_user_state(message.from_user.id) == states.WRITE_TEXT_FOR_POST)
+@bot.message_handler(content_types=['photo, text'], func=lambda message: db_access.get_user_state(message.from_user.id) == states.WRITE_TEXT_FOR_POST)
 def reg_production(message: types.Message):
     if message.content_type == 'text' and not message.text == 'Отмена':
         post = db_access.get_post_by_text(message.text)
