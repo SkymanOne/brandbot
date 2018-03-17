@@ -242,7 +242,7 @@ def manual_create_nickname(message: types.Message):
     bot.send_message(message.from_user.id, 'http://telegra.ph/1-Sozdayom-nickname-03-06')
 
 
-@bot.message_handler(func=lambda message: message.text == '2️⃣ Инструкция публикация поста')
+@bot.message_handler(func=lambda message: message.text == '2️⃣ Инструкция публикации поста')
 def manual_create_post(message: types.Message):
     bot.send_message(message.from_user.id, 'http://telegra.ph/2-Kak-vylozhitnajti-shmot-03-06')
 
