@@ -220,7 +220,8 @@ def add_photo(message: types.Message):
             bot.send_message(message.from_user.id, 'Публикация отменена❌', reply_markup=get_greeting_markup())
             db_access.set_user_state(message.from_user.id, states.NONE_STATE)
     else:
-        bot.send_message(message.from_user.id, '*Воу*, полегче, сейчас мне только фотки нужны или нажми на кнопку📲',
+        bot.send_message(message.from_user.id, 'Сейчас нужны *только фотографии*, присылай их '
+                                               'по очереди или нажми кнопку📲',
                          parse_mode='Markdown', reply_markup=markup)
 
 
