@@ -208,9 +208,9 @@ def add_photo(message: types.Message):
                          parse_mode='Markdown', reply_markup=get_greeting_markup())
         type_str = 'бесплатный'
         if post.type_of == type_const.FIXED_PUBLISH:
-            type_str = 'закрепленный'
+            type_str = '💵*Закреплённый*💵'
         elif post.type_of == type_const.OUT_OF_TURN_PUBLISH:
-            type_str = 'внеочередной'
+            type_str = '💶*внеочередной*💶'
         send_info_to_admins('Успешно добавлен {t} пост №{q} в очередь'.format(q=str(post.queue),
                                                                               t=type_str))
         db_access.set_user_state(message.from_user.id, states.NONE_STATE)
