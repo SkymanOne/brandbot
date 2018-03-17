@@ -306,7 +306,7 @@ def admin_greeting(message: types.Message):
                          parse_mode='Markdown')
 
 
-@bot.message_handler(func=lambda message: message.text == '✅ Следующая бесплатная публикация 👉'
+@bot.message_handler(func=lambda message: message.text == '✅ Следующая публикация 👉'
                      and (message.from_user.id == ADMIN_NIKITA_ID or
                           message.from_user.id == ADMIN_OGANES_ID or
                           message.from_user.id == ADMIN_GERMAN_ID))
