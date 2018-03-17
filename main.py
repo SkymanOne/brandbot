@@ -20,7 +20,7 @@ bot = telebot.TeleBot(TOKEN)
 server = Flask(__name__)
 ADMIN_NIKITA_ID = 450048975
 ADMIN_OGANES_ID = 291826906
-ADMIN_GERMAN_ID = 209715848
+ADMIN_GERMAN_ID = 410634632
 
 greeting_text = '*Добро пожаловать, модник!*😎🤙🏼\n\nДля того, чтобы опубликовать свой рарный айтем нужно быть ' \
                 'подписанным на наш канал!\n\n👉️ *@BrandPlace* 👈️ '
