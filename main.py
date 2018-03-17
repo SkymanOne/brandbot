@@ -282,7 +282,7 @@ def connect_to_admins(message: types.Message):
 
 def get_admin_panel_markup():
     markup = types.ReplyKeyboardMarkup()
-    markup.row('✅ Следующая бесплатная публикация 👉')
+    markup.row('✅ Следующая публикация 👉')
     markup.row('✅ Следующая закрепленная публикация 👉')
     markup.row('✅ Следующая публикация вне очереди 👉')
     return markup
