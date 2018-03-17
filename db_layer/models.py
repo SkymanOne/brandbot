@@ -17,6 +17,8 @@ class User(BaseModel):
     name = CharField(max_length=100)
     telegram_id = IntegerField()
     nickname = CharField(max_length=100)
+    state_of_editing = IntegerField(default=0)
+    type_of_post_editing = IntegerField(default=1)
 
 
 # оставляем до лучших времен

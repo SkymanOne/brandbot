@@ -1,7 +1,7 @@
 import logging
 import os
 import telebot
-from db_layer import db_access, type_const
+from db_layer import db_access, type_const, states
 
 from telebot import types
 from flask import Flask, request
@@ -33,7 +33,7 @@ greeting_text = '*Добро пожаловать, модник!*😎🤙🏼\n\
 def get_greeting_markup():
     markup = types.ReplyKeyboardMarkup()
     markup.row('💰Опубликовать💰')
-    markup.row('🔥Инструкция для публикации🔥')
+    markup.row('🔥Инструкция для публикации🔥', '👀 Очередь на публикацию 👀')
     markup.row('⚡Правила⚡️', '🌄Модные обои🌄')
     markup.row('🛠Связаться с админами🛠', '💻О разработчике💻')
     markup.resize_keyboard = True
@@ -117,9 +117,10 @@ def check_username(message: types.Message):
                    'информацию: \n\n1️⃣ Полное название предмета\n\n2️⃣Размер\n\n' \
                    '3️⃣ Состояние (от 1 до 10, где 10 это не ' \
                    'распакованная вещь)\n\n4️⃣ Город, возможность отправки по почте.\n\n5️⃣ Цена '
-            msg = bot.send_message(message.from_user.id, text,
-                                   reply_markup=markup, parse_mode='Markdown')
-            bot.register_next_step_handler(msg, reg_free_production)
+            bot.send_message(message.from_user.id, text,
+                             reply_markup=markup, parse_mode='Markdown')
+            db_access.set_user_type_of_post(message.from_user.id, type_const.FREE_PUBLISH)
+            db_access.set_user_state(message.from_user.id, states.WRITE_TEXT_FOR_POST)
         elif message.text == '💵Закреплённый пост💵 (300 руб.)':
             text = '💵Закреплённый пост💵 (300 руб.)\n•Висит 24 часа в закрепе•\n\n💡(После редактирования поста, ' \
                    'с тобой свяжется один из администраторов канала)💡\n\n(🔥ЗДЕСЬ НУЖЕН ТОЛЬКО ТЕКСТ. ОДНИМ ' \
@@ -127,18 +128,20 @@ def check_username(message: types.Message):
                    'содержать в себе следующую информацию: \n\n1️⃣ Полное название предмета\n\n2️⃣Размер\n\n3️⃣ ' \
                    'Состояние (от 1 до 10, где 10 это не распакованная вещь)\n\n4️⃣ Город, возможность отправки по ' \
                    'почте.\n\n5️⃣ Цена '
-            msg = bot.send_message(message.from_user.id, text,
-                                   reply_markup=markup, parse_mode='Markdown')
-            bot.register_next_step_handler(msg, reg_fixed_publish_production)
+            bot.send_message(message.from_user.id, text,
+                             reply_markup=markup, parse_mode='Markdown')
+            db_access.set_user_type_of_post(message.from_user.id, type_const.FIXED_PUBLISH)
+            db_access.set_user_state(message.from_user.id, states.WRITE_TEXT_FOR_POST)
         elif message.text == '💶Пост вне очереди💶 (150 руб.)':
             text = '💶Пост вне очереди💶 (150 руб.)\n\n💡(После редактирования поста, с тобой свяжется один из ' \
                    'администраторов канала)💡\n\n(🔥ЗДЕСЬ НУЖЕН ТОЛЬКО ТЕКСТ. ОДНИМ СООБЩЕНИЕМ🔥)\n\nПравила для ' \
                    'публикации поста о продаже: \nФорма произвольная, но она должна содержать в себе следующую ' \
                    'информацию: \n\n1️⃣ Полное название предмета\n\n2️⃣Размер\n\n3️⃣ Состояние (от 1 до 10, ' \
                    'где 10 это не распакованная вещь)\n\n4️⃣ Город, возможность отправки по почте.\n\n5️⃣ Цена '
-            msg = bot.send_message(message.from_user.id, text,
-                                   reply_markup=markup, parse_mode='Markdown')
-            bot.register_next_step_handler(msg, reg_out_of_turn)
+            bot.send_message(message.from_user.id, text,
+                             reply_markup=markup, parse_mode='Markdown')
+            db_access.set_user_type_of_post(message.from_user.id, type_const.OUT_OF_TURN_PUBLISH)
+            db_access.set_user_state(message.from_user.id, states.WRITE_TEXT_FOR_POST)
 
 
 def send_info_to_admins(text: str):
@@ -147,93 +150,38 @@ def send_info_to_admins(text: str):
     bot.send_message(ADMIN_NIKITA_ID, text, parse_mode='Markdown')
 
 
-def reg_free_production(message: types.Message):
+@bot.message_handler(func=lambda message: db_access.get_user_state(message.from_user.id) == states.WRITE_TEXT_FOR_POST)
+def reg_production(message: types.Message):
     if message.content_type == 'text' and not message.text == 'Отмена':
         post = db_access.get_post_by_text(message.text)
         count_text = len(message.text)
         if post is None and count_text > 10:
-            result = db_access.create_post(type_const.FREE_PUBLISH, message.text, '', message.from_user.id)
+            type_of = db_access.get_user_type_of_post(message.from_user.id)
+            result = db_access.create_post(type_of, message.text, '', message.from_user.id)
             if result:
                 markup = types.ReplyKeyboardMarkup()
                 markup.row('Отмена')
                 markup.resize_keyboard = True
-                msg = bot.send_message(message.from_user.id, 'Такс😌, супер, теперь отправь несколько фото📷,'
-                                                             ' *но по одному* 1️⃣',
-                                       parse_mode='Markdown', reply_markup=markup)
-                bot.register_next_step_handler(msg, add_photo)
+                bot.send_message(message.from_user.id, 'Такс😌, супер, теперь отправь несколько фото📷,'
+                                                       ' *но по одному* 1️⃣',
+                                 parse_mode='Markdown', reply_markup=markup)
+                db_access.set_user_state(message.from_user.id, states.ADD_PHOTO)
             else:
                 bot.send_message(message.from_user.id, 'Упс 🙄, что-то пошло не так😒')
         else:
             bot.send_message(message.from_user.id, 'Такс, такс, в твоем описании товара слишком *мало символов* 😏'
                                                    ' или такое описание *уже существует* 🙄',
                              parse_mode='Markdown')
-            msg = bot.send_message(message.from_user.id, 'Пришли текст еще раз 👉')
-            bot.register_next_step_handler(msg, reg_free_production)
+            bot.send_message(message.from_user.id, 'Пришли текст еще раз 👉')
     elif message.text == 'Отмена':
+        db_access.set_user_state(message.from_user.id, states.NONE_STATE)
         bot.send_message(message.from_user.id, 'Публикация отменена❌', reply_markup=get_greeting_markup())
     else:
-        msg = bot.send_message(message.from_user.id, 'Ну слушай, первым отправляем текст о товаре, фотки чутка позже 😉')
-        bot.register_next_step_handler(msg, reg_free_production)
+        bot.send_message(message.from_user.id, 'Ну слушай, первым отправляем текст о товаре, фотки чутка позже 😉')
 
 
-def reg_out_of_turn(message: types.Message):
-    if message.content_type == 'text' and not message.text == 'Отмена':
-        post = db_access.get_post_by_text(message.text)
-        count_text = len(message.text)
-        if post is None and count_text > 10:
-            result = db_access.create_post(type_const.OUT_OF_TURN_PUBLISH, message.text, '', message.from_user.id)
-            if result:
-                markup = types.ReplyKeyboardMarkup()
-                markup.row('Отмена')
-                markup.resize_keyboard = True
-                msg = bot.send_message(message.from_user.id, 'Такс😌, супер, теперь отправь несколько фото📷,'
-                                                             ' *но по одному* 1️⃣',
-                                       parse_mode='Markdown', reply_markup=markup)
-                bot.register_next_step_handler(msg, add_photo)
-            else:
-                bot.send_message(message.from_user.id, 'Упс 🙄, что-то пошло не так😒')
-        else:
-            bot.send_message(message.from_user.id, 'Такс, такс, в твоем описании товара слишком *мало символов* 😏'
-                                                   ' или такое описание *уже существует* 🙄',
-                             parse_mode='Markdown')
-            msg = bot.send_message(message.from_user.id, 'Пришли текст еще раз 👉')
-            bot.register_next_step_handler(msg, reg_out_of_turn)
-    elif message.text == 'Отмена':
-        bot.send_message(message.from_user.id, 'Публикация отменена❌', reply_markup=get_greeting_markup())
-    else:
-        msg = bot.send_message(message.from_user.id, 'Ну слушай, первым отправляем текст о товаре, фотки чутка позже 😉')
-        bot.register_next_step_handler(msg, reg_out_of_turn)
-
-
-def reg_fixed_publish_production(message: types.Message):
-    if message.content_type == 'text' and not message.text == 'Отмена':
-        post = db_access.get_post_by_text(message.text)
-        count_text = len(message.text)
-        if post is None and count_text > 10:
-            result = db_access.create_post(type_const.FIXED_PUBLISH, message.text, '', message.from_user.id)
-            if result:
-                markup = types.ReplyKeyboardMarkup()
-                markup.row('Отмена')
-                markup.resize_keyboard = True
-                msg = bot.send_message(message.from_user.id, 'Такс😌, супер, теперь отправь несколько фото📷,'
-                                                             ' *но по одному* 1️⃣',
-                                       parse_mode='Markdown', reply_markup=markup)
-                bot.register_next_step_handler(msg, add_photo)
-            else:
-                bot.send_message(message.from_user.id, 'Упс 🙄, что-то пошло не так😒')
-        else:
-            bot.send_message(message.from_user.id, 'Такс, такс, в твоем описании товара слишком *мало символов* 😏'
-                                                   ' или такое описание *уже существует* 🙄',
-                             parse_mode='Markdown')
-            msg = bot.send_message(message.from_user.id, 'Пришли текст еще раз 👉')
-            bot.register_next_step_handler(msg, reg_fixed_publish_production)
-    elif message.text == 'Отмена':
-        bot.send_message(message.from_user.id, 'Публикация отменена❌', reply_markup=get_greeting_markup())
-    else:
-        msg = bot.send_message(message.from_user.id, 'Ну слушай, первым отправляем текст о товаре, фотки чутка позже 😉')
-        bot.register_next_step_handler(msg, reg_fixed_publish_production)
-
-
+@bot.message_handler(content_types=['photo', 'text'],
+                     func=lambda message: db_access.get_user_state(message.from_user.id) == states.ADD_PHOTO)
 def add_photo(message: types.Message):
     post = db_access.get_latest_post(message.from_user.id)
     markup = types.ReplyKeyboardMarkup()
@@ -247,9 +195,8 @@ def add_photo(message: types.Message):
         link = db_access.upload_photo(file)
         post.links_of_photos += ' {link}'.format(link=link)
         post.save()
-        msg = bot.send_message(message.from_user.id, 'Если есть еще фото - присылай👉',
-                               reply_markup=markup)
-        bot.register_next_step_handler(msg, add_photo)
+        bot.send_message(message.from_user.id, 'Если есть еще фото - присылай👉',
+                         reply_markup=markup)
     elif message.text == 'Закончить добавление фото':
         queue = post.queue
         text = 'Создан отложенный пост в канал «BrandPlace» @brandplace.\n\n*Твое место в общей очереди на ' \
@@ -260,15 +207,29 @@ def add_photo(message: types.Message):
         bot.send_message(message.from_user.id, text.format(n=queue, p1=outc, p2=fxc),
                          parse_mode='Markdown', reply_markup=get_greeting_markup())
         send_info_to_admins('Успешно добавлен пост №{q} в очередь'.format(q=str(post.queue)))
+        db_access.set_user_state(message.from_user.id, states.NONE_STATE)
     elif message.text == 'Отмена':
         result = db_access.delete_latest_post(message.from_user.id)
         if result:
             bot.send_message(message.from_user.id, 'Публикация отменена❌', reply_markup=get_greeting_markup())
+            db_access.set_user_state(message.from_user.id, states.NONE_STATE)
     else:
-        msg = bot.send_message(message.from_user.id, '*Воу*, палехче😼, присылай мне только фото плес или нажми на '
-                                                     'кнопку📲',
-                               parse_mode='Markdown', reply_markup=markup)
-        bot.register_next_step_handler(msg, add_photo)
+        bot.send_message(message.from_user.id, '*Воу*, палехче😼, присылай мне только фото плес или нажми на '
+                                               'кнопку📲',
+                         parse_mode='Markdown', reply_markup=markup)
+
+
+@bot.message_handler(func=lambda message: message.text == '👀 Очередь на публикацию 👀')
+def queue_of_post(message: types.Message):
+    all_posts = db_access.get_all_posts().count()
+    fixed_post = db_access.get_all_fixed_post().count()
+    oof_post = db_access.get_all_out_of_turn_post().count()
+    text = 'Так, вот сводка по очереди на публикацию ✅ \n\n' \
+           'Общее количество постов на публикацию 👉 *{cp1}*\n' \
+           '💶Постов вне очереди💶 👉 *{cp2}*\n' \
+           '💵Закреплённых постов💵 👉 *{cp3}*'.format(cp1=all_posts, cp2=oof_post, cp3=fixed_post)
+
+    bot.send_message(message.from_user.id, text, parse_mode='Markdown')
 
 
 @bot.message_handler(func=lambda message: message.text == '1️⃣ Создаем nickname')
@@ -459,6 +420,7 @@ if 'HEROKU' in list(os.environ.keys()):
 
 
     if __name__ == '__main__':
+        db_access.init_db()
         server.run(host="0.0.0.0", port=int(os.environ.get('PORT', 5000)))
 else:
     bot.remove_webhook()
