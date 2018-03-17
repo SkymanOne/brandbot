@@ -209,7 +209,7 @@ def add_photo(message: types.Message):
         type_str = 'бесплатный'
         if post.type_of == type_const.FIXED_PUBLISH:
             type_str = 'закрепленный'
-        elif post.type_of == type_const.OUT_OF_TURN_PUBLISHЖ
+        elif post.type_of == type_const.OUT_OF_TURN_PUBLISH:
             type_str = 'внеочередной'
         send_info_to_admins('Успешно добавлен {t} пост №{q} в очередь'.format(q=str(post.queue),
                                                                               t=type_str))
