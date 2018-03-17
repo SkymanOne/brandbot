@@ -40,6 +40,50 @@ def get_user(telegram_id: int):
         return user
 
 
+def set_user_state(telegram_id: int, state: int):
+    user = get_user(telegram_id)
+    if user is not None:
+        logger.info('изменение состояние')
+        user.state_of_editing = state
+        user.save()
+        return True
+    else:
+        logger.error('ошибка изменения состояния')
+        return False
+
+
+def set_user_type_of_post(telegram_id: int, type_of: int):
+    user = get_user(telegram_id)
+    if user is not None:
+        logger.info('изменение типа создаваемого поста')
+        user.type_of_post_editing = type_of
+        user.save()
+        return True
+    else:
+        logger.error('ошибка типа создаваемого поста')
+        return False
+
+
+def get_user_state(telegram_id: int):
+    user = get_user(telegram_id)
+    if user is not None:
+        logger.info('получение состояния')
+        return user.state_of_editing
+    else:
+        logger.error('ошибка получения состояния')
+        return None
+
+
+def get_user_type_of_post(telegram_id: int):
+    user = get_user(telegram_id)
+    if user is not None:
+        logger.info('получение типа поста')
+        return user.type_of_post_editing
+    else:
+        logger.error('ошибка получения типа поста')
+        return None
+
+
 def get_all_posts():
     logger.info('Вызов метода для получения списка всех постов.')
     try:
