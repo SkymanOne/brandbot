@@ -267,7 +267,7 @@ def about_developer(message: types.Message):
     vk_button = types.InlineKeyboardButton('🔷 VK 🔷', url='https://vk.com/german_it')
     inst_button = types.InlineKeyboardButton('🔶 Inst 🔶', url='https://www.instagram.com/german.nikolishin/')
     github_button = types.InlineKeyboardButton('⚡️ GitHub ⚡️', url='https://github.com/SkymanOne')
-    channel_button = types.InlineKeyboardButton('💠 Telegram Channel 💠', url='https://t.me/VneUrokaDev')
+    channel_button = types.InlineKeyboardButton('💠 Telegram Channel 💠', url='https://t.me/SkyMenDev')
     keyboard.add(github_button, vk_button, inst_button, telegram_button, channel_button)
     bot.send_message(message.from_user.id, about_me, reply_markup=keyboard)
 
