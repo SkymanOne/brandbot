@@ -116,7 +116,7 @@ def create_post(type_of: int, text: str, links: str, seller_id: int):
 def get_post():
     try:
         logger.info('получение первого в очереди поста...')
-        post = QueuePost.get(QueuePost.queue == 1)
+        post = QueuePost.get()
     except DoesNotExist:
         logger.error('пост НЕ НАЙДЕН в базе данных')
         return None
